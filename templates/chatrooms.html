@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Rooms</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Chat Rooms</h2>
+        </div>
+        <div class="create-room flex gap-10">
+            <input type="text" id="roomNameInput" class="interactive-element" placeholder="Enter room name">
+            <button class="interactive-element" onclick="createRoom()">Create Room</button>
+        </div>
+        <div class="chatroom-list gap-15" id="chatroomList">
+        </div>
+    </div>
+
+    <script>
+        async function fetchChatrooms() {
+            const response = await fetch('/api/chatrooms');
+            const chatrooms = await response.json();
+            const chatroomList = document.getElementById('chatroomList');
+            chatroomList.innerHTML = '';
+            
+            chatrooms.forEach(room => {
+                const roomDiv = document.createElement('div');
+                roomDiv.className = 'chatroom-item flex-between interactive-element';
+                roomDiv.innerHTML = `
+                    <div>
+                        <h3>${room.name}</h3>
+                    </div>
+                    <button class="join-button interactive-element" onclick="joinRoom('${room.id}')">Join</button>
+                `;
+                chatroomList.appendChild(roomDiv);
+            });
+        }
+
+        async function createRoom() {
+            const roomName = document.getElementById('roomNameInput').value.trim();
+            if (!roomName) return;
+
+            const response = await fetch('/api/chatrooms', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name: roomName })
+            });
+
+            if (response.ok) {
+                document.getElementById('roomNameInput').value = '';
+                fetchChatrooms();
+            }
+        }
+
+        function joinRoom(roomId) {
+            window.location.href = `/chat/${roomId}`;
+        }
+
+        fetchChatrooms();
+    </script>
+</body>
+</html> 

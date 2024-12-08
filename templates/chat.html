@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Room</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+</head>
+<body>
+    <div class="chat-container flex-column">
+        <div class="chat-header">
+            <div class="header-top flex-between">
+                <h2>{{ room.name }}</h2>
+                <a href="/" class="back-button interactive-element">Back</a>
+            </div>
+            <input type="text" id="username" class="username-input interactive-element" placeholder="Enter your name" value="User">
+        </div>
+        <div class="chat-messages" id="chat-messages"></div>
+        <div class="chat-input flex gap-10">
+            <input type="text" id="messageInput" class="interactive-element" placeholder="Type your message...">
+            <button class="interactive-element" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const roomId = '{{ room.id }}';
+        let ws = new WebSocket(`ws://${window.location.host}/ws/${roomId}`);
+        const messagesDiv = document.getElementById('chat-messages');
+        const messageInput = document.getElementById('messageInput');
+
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${data.type}-message interactive-element`;
+            
+            const senderDiv = document.createElement('div');
+            senderDiv.className = 'sender-name';
+            senderDiv.textContent = data.sender;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.textContent = data.message;
+            
+            messageDiv.appendChild(senderDiv);
+            messageDiv.appendChild(contentDiv);
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        };
+
+        ws.onclose = function(event) {
+            console.log('WebSocket connection closed');
+        };
+
+        function sendMessage() {
+            if (messageInput.value.trim()) {
+                const message = {
+                    sender: document.getElementById('username').value || 'User',
+                    message: messageInput.value
+                };
+                ws.send(JSON.stringify(message));
+                messageInput.value = '';
+            }
+        }
+
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html> 
